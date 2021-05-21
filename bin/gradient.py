@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     intensities = None
     with open(in_loc, "rb") as in_file:
-        intensities = np.array([x for x in in_file.read()], dtype=np.float).reshape(x_dim, y_dim, z_dim)
+        intensities = np.array([x for x in in_file.read()], dtype=np.float).reshape(z_dim, y_dim, x_dim)
 
     g_x, g_y, g_z = np.gradient(intensities)
     grad = np.abs(sobel(intensities))
