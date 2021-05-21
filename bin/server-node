@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const basedir = 'build';
+const port = process.env.PORT || 3000;
+
+http.createServer(function(request, response) {
+    const range = request.headers.range;
+    if (range) {
+        console.log(request.method, request.url, range);
+    } else {
+        console.log(request.method, request.url);
+    }
+
+    let filePath = request.url;
+    if (request.url === '/') {
+        filePath = '/index.html';
+    }
+
+    const extname = String(path.extname(filePath)).toLowerCase();
+    let contentType = 'text/html';
+    const mimeTypes = {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.wav': 'audio/wav',
+        '.mp4': 'video/mp4',
+        '.woff': 'application/font-woff',
+        '.ttf': 'application/font-ttf',
+        '.otf': 'application/font-otf'
+    };
+
+    contentType = mimeTypes[extname] || 'application/octet-stream';
+
+    if (request.method === 'GET') {
+        fs.readFile(basedir + filePath, function (error, content) {
+            if (error) {
+                if (error.code == 'ENOENT') {
+                    console.log('404: ' + filePath);
+                    response.writeHead(404);
+                    response.end();
+                } else {
+                    console.log('500: ' + filePath);
+                    response.writeHead(500);
+                    response.end('Server error: ' + error.code);
+                }
+            } else {
+                if (range) {
+                    const re = /^bytes=([0-9]+)-([0-9]+)$/;
+                    const match = range.match(re);
+                    if (match) {
+                        const rangeStart = parseInt(match[1], 10);
+                        const rangeEnd = parseInt(match[2], 10);
+                        content = content.slice(rangeStart, rangeEnd + 1);
+                    }
+                }
+                response.writeHead(200, {
+                    'Content-Type': contentType,
+                    'Content-Length': content.length,
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET',
+                    'Access-Control-Allow-Headers': 'Range'
+                });
+                response.end(content, 'utf-8');
+            }
+        });
+    } else if (request.method === 'HEAD' || request.method === 'OPTIONS') {
+        fs.lstat(basedir + filePath, function (error, stat) {
+            if (error) {
+                if (error.code == 'ENOENT') {
+                    console.log('404: ' + filePath);
+                    response.writeHead(404);
+                    response.end();
+                } else {
+                    console.log('500: ' + filePath);
+                    response.writeHead(500);
+                    response.end('Server error: ' + error.code);
+                }
+            } else {
+                response.writeHead(200, {
+                    'Content-Type': contentType,
+                    'Content-Length': stat.size,
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET',
+                    'Access-Control-Allow-Headers': 'Range'
+                });
+                response.end();
+            }
+        });
+    } else if (request.method === 'POST' && filePath === '/cluster') {
+        let body = ''
+        request.on('data', function(data) {
+            body += data
+        })
+        request.on('end', function() {
+            let data = JSON.parse(body);
+            let spawn = require('child_process').spawn,
+                py    = spawn('python', ['bin/cluster.py']),
+                dataString = "";
+            py.stdout.on('data', function (data2) {
+                dataString += data2.toString();
+            });
+            py.on('close', (code) => {
+                console.log(" => DONE CLUSTERING")
+                console.log(dataString);
+                fs.readFile('./test.json', function (err, data) {
+                    if (err) throw err;
+                    response.writeHead(200, {'Content-Type': 'image/png'});
+                    response.write(data);
+                    response.end();
+                });
+            });
+            py.stdin.write(JSON.stringify(data));
+            py.stdin.end();
+        })
+    } else if (request.method === 'POST' && filePath === '/generate') {
+        let body = ''
+        request.on('data', function(data) {
+            body += data
+        })
+        request.on('end', function() {
+            let data = JSON.parse(body);
+            data = data.replace(/^data:image\/png;base64,/, '');
+
+            fs.writeFile("./tf.png", data, 'base64', function(err) {
+                if (err) throw err;
+
+
+            });
+        })
+    } else {
+        response.writeHead(404);
+        response.end();
+    }
+
+}).listen(port);
+
+console.log('Listening on port ' + port);

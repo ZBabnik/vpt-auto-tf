@@ -1,0 +1,32 @@
+<!-- #package html/templates -->
+
+<!-- #include ../css/TransferFunctionWidget.css -->
+
+<div class="instantiate transfer-function-widget">
+  <div class="widget">
+    <canvas></canvas>
+  </div>
+  <div class="controls">
+    <input type="button" class="button" value="Add bump" name="add-bump">
+    <input type="button" class="button" value="Load" name="load">
+    <input type="button" class="button" value="Save" name="save">
+    <!--<input type="button" class="button" value="Load Image" name="load_img">-->
+    <div class="panel">
+      <label>Color</label>
+      <input name="color" type="color">
+    </div>
+    <div>
+      <label>Alpha</label>
+      <input name="alpha" type="number" min="0" max="1" step="0.1" value="1">
+    </div>
+    <div>
+      <input type="button" class="button" value="Generate" name="generate_tf">
+    </div>
+    <div id="suggestions_tab" style="visibility: hidden">
+      <label>Suggestions</label>
+      <div id="suggestion_input">
+        <input type="button" value="Useless">
+      </div>
+    </div>
+  </div>
+</div>

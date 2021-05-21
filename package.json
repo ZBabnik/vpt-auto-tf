@@ -1,0 +1,28 @@
+{
+  "name": "vpt",
+  "version": "1.0.0",
+  "description": "Volumetric Path Tracing",
+  "main": "bin/server-express",
+  "scripts": {
+    "build": "bin/packer",
+    "start": "bin/server-express",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://terier@bitbucket.org/terier/vpt.git"
+  },
+  "author": "terier",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/terier/vpt#readme",
+  "dependencies": {
+    "express": "latest",
+    "mathjs": "^9.3.2",
+    "node-gyp": "^8.0.0"
+  },
+  "engines": {
+    "node": "12.x"
+  },
+  "heroku-run-build-script": true,
+  "keywords": []
+}
